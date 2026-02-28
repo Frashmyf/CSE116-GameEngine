@@ -6,6 +6,8 @@ import app.display.common.Background;
 import app.gameengine.Game;
 import app.gameengine.Level;
 import app.gameengine.model.physics.PhysicsEngine;
+import app.gameengine.model.physics.Vector2D;
+import app.gameengine.utils.Randomizer;
 import app.gameengine.utils.Timer;
 
 /**
@@ -66,7 +68,14 @@ public class SnakeLevel extends Level {
      * is to prevent the snake from leaving the confines of the level.
      */
     public void wallOffBoundary() {
-
+        for (int x = -1; x <= this.width; x++) {
+            addStaticObject(new SnakeWall(x, -1));
+            addStaticObject(new SnakeWall(x, this.height));
+        }
+        for (int y = 0; y < this.height; y++) {
+            addStaticObject(new SnakeWall(-1, y));
+            addStaticObject(new SnakeWall(this.width, y));
+        }
     }
 
     /**
@@ -78,7 +87,30 @@ public class SnakeLevel extends Level {
      * static objects.
      */
     public void spawnFood() {
+        int totalTiles = this.width * this.height;
 
+        if (1 + this.tail.size() >= totalTiles) {
+            this.game.advanceLevel();
+            return;
+        }
+
+        ArrayList<Vector2D> exceptions = new ArrayList<>();
+        for (SnakeBody body : this.tail) {
+            exceptions.add(body.getLocation().copy());
+        }
+        exceptions.add(this.getPlayer().getLocation().copy());
+        for (SnakeFood f : this.food) {
+            exceptions.add(f.getLocation().copy());
+        }
+
+        Vector2D pos = Randomizer.randomIntVector2D(new Vector2D(this.width, this.height), exceptions);
+        if (pos == null) {
+            return;
+        }
+
+        SnakeFood newFood = new SnakeFood(pos.getX(), pos.getY(), this);
+        this.food.add(newFood);
+        this.addStaticObject(newFood);
     }
 
     /**
@@ -90,7 +122,9 @@ public class SnakeLevel extends Level {
      * well as its list of static objects.
      */
     public void lengthenSnake() {
-
+        for (int i = 0; i < this.lengthIncrease; i++) {
+            this.addBodySegment();
+        }
     }
 
     /**
@@ -98,7 +132,23 @@ public class SnakeLevel extends Level {
      * stack behind the head of the snake.
      */
     public void spawnSnake() {
+        for (int i = 0; i < this.startingLength - 1; i++) {
+            this.addBodySegment();
+        }
+    }
 
+    private void addBodySegment() {
+        SnakeBody body;
+        if (this.tail.isEmpty()) {
+            Vector2D headLoc = this.getPlayer().getLocation();
+            Vector2D orientation = this.getPlayer().getOrientation();
+            body = new SnakeBody(headLoc.getX() - orientation.getX(), headLoc.getY() - orientation.getY());
+        } else {
+            Vector2D frontLoc = this.tail.get(0).getLocation();
+            body = new SnakeBody(frontLoc.getX(), frontLoc.getY());
+        }
+        this.tail.add(0, body);
+        this.addStaticObject(body);
     }
 
     /**
@@ -106,7 +156,14 @@ public class SnakeLevel extends Level {
      * tile, including both body segments and the head of the snake.
      */
     private void moveSnake() {
-
+        if (!this.tail.isEmpty()) {
+            SnakeBody tip = this.tail.remove(0);
+            tip.setLocation(this.getPlayer().getLocation().getX(), this.getPlayer().getLocation().getY());
+            this.tail.add(tip);
+        }
+        Vector2D headLoc = this.getPlayer().getLocation();
+        Vector2D orientation = this.getPlayer().getOrientation();
+        this.getPlayer().setLocation(headLoc.getX() + orientation.getX(), headLoc.getY() + orientation.getY());
     }
 
     @Override

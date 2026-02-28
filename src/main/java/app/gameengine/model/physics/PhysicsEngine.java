@@ -43,7 +43,9 @@ public class PhysicsEngine {
      * @param object the object being updated
      */
     public void updateObject(double dt, DynamicGameObject object) {
-
+        Vector2D velocity = object.getVelocity();
+        Vector2D location = object.getLocation();
+        object.setLocation(location.getX() + velocity.getX() * dt, location.getY() + velocity.getY() * dt);
     }
 
     /**
@@ -56,7 +58,19 @@ public class PhysicsEngine {
      * @return {@code true} if a collision is occurring, {@code false} otherwise
      */
     public boolean detectCollision(Hitbox hitbox1, Hitbox hitbox2) {
-        return false;
+        double x1 = hitbox1.getLocation().getX();
+        double y1 = hitbox1.getLocation().getY();
+        double w1 = hitbox1.getDimensions().getX();
+        double h1 = hitbox1.getDimensions().getY();
+
+        double x2 = hitbox2.getLocation().getX();
+        double y2 = hitbox2.getLocation().getY();
+        double w2 = hitbox2.getDimensions().getX();
+        double h2 = hitbox2.getDimensions().getY();
+
+        double xOverlap = Math.min(x1 + w1, x2 + w2) - Math.max(x1, x2);
+        double yOverlap = Math.min(y1 + h1, y2 + h2) - Math.max(y1, y2);
+        return xOverlap > 0 && yOverlap > 0;
     }
 
     /**
@@ -72,7 +86,19 @@ public class PhysicsEngine {
      * @return the minimum overlapping distance
      */
     public double getOverlap(Hitbox hitbox1, Hitbox hitbox2) {
-        return 0.0;
+        double x1 = hitbox1.getLocation().getX();
+        double y1 = hitbox1.getLocation().getY();
+        double w1 = hitbox1.getDimensions().getX();
+        double h1 = hitbox1.getDimensions().getY();
+
+        double x2 = hitbox2.getLocation().getX();
+        double y2 = hitbox2.getLocation().getY();
+        double w2 = hitbox2.getDimensions().getX();
+        double h2 = hitbox2.getDimensions().getY();
+
+        double xOverlap = Math.min(x1 + w1, x2 + w2) - Math.max(x1, x2);
+        double yOverlap = Math.min(y1 + h1, y2 + h2) - Math.max(y1, y2);
+        return Math.min(xOverlap, yOverlap);
     }
 
     /**
